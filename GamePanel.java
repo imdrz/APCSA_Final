@@ -48,12 +48,10 @@ public class GamePanel extends JPanel {
                 } else if (a[3] > 10) {
                     a[3] = 10;
                 }
-                
             }
         }
         updatePos(type, id);
     }
-
     
 
     public void updatePos(int type, int id) {
@@ -89,7 +87,7 @@ public class GamePanel extends JPanel {
         String direction = "";
         int[] arr = getSpecificData(id, 1);
         if (arr[7] == id && arr[6] == 1) {
-            if (arr[3] > 0) {
+            if (arr[3] < 0) {
                 direction += "N";
             }
 

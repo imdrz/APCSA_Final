@@ -86,7 +86,6 @@ public class GameFrame extends JFrame implements KeyListener, ActionListener {
     }
 
     public void actionPerformed(ActionEvent e) {
-        // System.out.println(Arrays.toString(contentPanel.getSpecificData(0, 1)));
         if (strokes[0] == 1) {
             contentPanel.updateVelocity(0, 9, 1, 0);
             strokes[0] = 0;
