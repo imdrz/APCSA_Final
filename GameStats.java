@@ -1,4 +1,4 @@
-// Represents current Game Stats
+package APCSA_Final;// Represents current Game Stats
 
 import java.awt.*;
 import javax.swing.*;
