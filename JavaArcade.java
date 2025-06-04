@@ -1,4 +1,4 @@
-package APCSA_Final;/*
+/*
 Author: A. DiBenedetto
 Purpose: All games must implement this interface to be compatible with the Java arcade.
 */

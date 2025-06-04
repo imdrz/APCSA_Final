@@ -7,13 +7,13 @@ public class Game extends JPanel implements KeyListener, ActionListener {
     private Timer timer;
     private int WIDTH = 600, HEIGHT = 600;
     private PlayerObject player1, player2;
-    private Rectangle[] platforms;
+    private Rectangle[] platforms, m1, m2, m3;
     private JLabel player1HealthLabel, player2HealthLabel;
-    private ArrayList<Projectile> projectiles = new ArrayList<>();
+    public static ArrayList<Projectile> projectiles;
     private int xReach = 85, yReach = 85;
+    private int[] p1C, p2C;
 
     public Game() {
-
         this.setLayout(null);
 
         player1HealthLabel = new JLabel();
@@ -32,24 +32,42 @@ public class Game extends JPanel implements KeyListener, ActionListener {
         this.addKeyListener(this);
         this.setSize(WIDTH, HEIGHT);
 
-        Rectangle bottomBound = new Rectangle(-200, 800, 1200, 30);
-        platforms = new Rectangle[]{new Rectangle(200, 400, 200, 30), new Rectangle(90, 220, 60, 30), new Rectangle(450, 220, 60, 30), new Rectangle(100, 520, 400, 30), bottomBound};
+        m1 = new Rectangle[]{new Rectangle(200, 400, 200, 30), new Rectangle(90, 220, 60, 30), new Rectangle(450, 220, 60, 30), new Rectangle(100, 520, 400, 30)};
+        m2 = new Rectangle[]{new Rectangle(50, 400, 60, 30), new Rectangle(490, 400, 60, 30), new Rectangle(100, 520, 400, 30)};
+        m3 = new Rectangle[]{new Rectangle(100, 520, 400, 30)};
 
-        startGame();
-
-
-
-
-        platforms[0] = new Rectangle(100, 500, 400, 50);
+        int r = (int) (Math.random() * 3) + 1;
+        // System.out.println((int) (Math.random() * 3) + 1);
 
 
-        for (int i = 1; i < 7; i++) {
-            int width = 50;
-            int height = 20;
-            int x = (int)(Math.random() * (400)) + 100;
-            int y = 200 + (int)(Math.random() * (300));
-            platforms[i] = new Rectangle(x, y, width, height);
+        switch (r) {
+            case 1:
+                platforms = m1;
+                p1C = new int[]{100, 100};
+                p2C = new int[]{460, 100};
+                break;
+            case 2:
+                platforms = m2;
+                p1C = new int[]{60, 350};
+                p2C = new int[]{500, 200};
+                break;
+            case 3:
+                platforms = m3;
+                break;
+            default:
+                break;
         }
+
+
+        // platforms[0] = new Rectangle(100, 500, 400, 50);
+
+        // for (int i = 1; i < 7; i++) {
+        //     int width = 50;
+        //     int height = 20;
+        //     int x = (int)(Math.random() * (400)) + 100;
+        //     int y = 200 + (int)(Math.random() * (300));
+        //     platforms[i] = new Rectangle(x, y, width, height);
+        // }
 
         startGame();
         timer = new Timer(15, this);
@@ -57,8 +75,9 @@ public class Game extends JPanel implements KeyListener, ActionListener {
     }
 
     public void startGame() {
-        player1 = new PlayerObject("Imad1.png", 100, 100, platforms, new int[]{KeyEvent.VK_A, KeyEvent.VK_D, KeyEvent.VK_W, KeyEvent.VK_S});
-        player2 = new PlayerObject("Imad2.png", 460, 100, platforms, new int[]{KeyEvent.VK_LEFT, KeyEvent.VK_RIGHT, KeyEvent.VK_UP, KeyEvent.VK_DOWN});
+        player1 = new PlayerObject("Imad1.png", p1C[0], p1C[1], platforms, new int[]{KeyEvent.VK_A, KeyEvent.VK_D, KeyEvent.VK_W, KeyEvent.VK_S});
+        player2 = new PlayerObject("Imad2.png", p2C[0], p2C[0], platforms, new int[]{KeyEvent.VK_LEFT, KeyEvent.VK_RIGHT, KeyEvent.VK_UP, KeyEvent.VK_DOWN});
+        projectiles = new ArrayList<>();
     }
 
     public void paintComponent(Graphics g) {
@@ -76,39 +95,39 @@ public class Game extends JPanel implements KeyListener, ActionListener {
         player2.draw(g);
     }
 
-    public void attack(KeyEvent e) {
-        int[] p1D = player1.getData();
-        int[] p2D = player2.getData();
-        int[] hitCoords;
-        int xD, yD;
-        if (e.getKeyCode() == KeyEvent.VK_S) {
-            hitCoords = player1.getHitCoords();
-            xD = p2D[0] - p1D[0];
-            yD = p2D[1] - p1D[1];
-            if (hitCoords[0] > 0) {
-                if ((xD < xReach * hitCoords[0] && (xD > -15)) && yD <= yReach * hitCoords[1]) {
-                    player2.takeHit(1);
-                }
-            } else {
-                if ((xD > xReach * hitCoords[0] && (xD < 15)) && yD <= yReach * hitCoords[1]) {
-                    player2.takeHit(-1);
-                }
-            }
-        } else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
-            hitCoords = player2.getHitCoords();
-            xD = p1D[0] - p2D[0];
-            yD = p1D[1] - p2D[1];
-            if (hitCoords[0] > 0) {
-                if ((xD < xReach * hitCoords[0] && (xD > -15)) && yD <= yReach * hitCoords[1]) {
-                    player1.takeHit(1);
-                }
-            } else {
-                if ((xD > xReach * hitCoords[0] && (xD < 15)) && yD <= yReach * hitCoords[1]) {
-                    player1.takeHit(-1);
-                }
-            }
-        }
-    }
+    // public void attack(KeyEvent e) {
+    //     int[] p1D = player1.getData();
+    //     int[] p2D = player2.getData();
+    //     int[] hitCoords;
+    //     int xD, yD;
+    //     if (e.getKeyCode() == KeyEvent.VK_S) {
+    //         hitCoords = player1.getHitCoords();
+    //         xD = p2D[0] - p1D[0];
+    //         yD = p2D[1] - p1D[1];
+    //         if (hitCoords[0] > 0) {
+    //             if ((xD < xReach * hitCoords[0] && (xD > -15)) && yD <= yReach * hitCoords[1]) {
+    //                 player2.takeHit(1);
+    //             }
+    //         } else {
+    //             if ((xD > xReach * hitCoords[0] && (xD < 15)) && yD <= yReach * hitCoords[1]) {
+    //                 player2.takeHit(-1);
+    //             }
+    //         }
+    //     } else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+    //         hitCoords = player2.getHitCoords();
+    //         xD = p1D[0] - p2D[0];
+    //         yD = p1D[1] - p2D[1];
+    //         if (hitCoords[0] > 0) {
+    //             if ((xD < xReach * hitCoords[0] && (xD > -15)) && yD <= yReach * hitCoords[1]) {
+    //                 player1.takeHit(1);
+    //             }
+    //         } else {
+    //             if ((xD > xReach * hitCoords[0] && (xD < 15)) && yD <= yReach * hitCoords[1]) {
+    //                 player1.takeHit(-1);
+    //             }
+    //         }
+    //     }
+    // }
 
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -120,7 +139,6 @@ public class Game extends JPanel implements KeyListener, ActionListener {
             p.update();
         }
 
-
         player1HealthLabel.setText("Player 1 Health: " + player1.getHealth());
         player2HealthLabel.setText("Player 2 Health: " + player2.getHealth());
 
@@ -128,13 +146,6 @@ public class Game extends JPanel implements KeyListener, ActionListener {
             JOptionPane.showMessageDialog(this, "Player 1 has been defeated!");
             timer.stop();
             timer.start();
-            for (int i = 1; i < 7; i++) {
-                int width = 50;
-                int height = 20;
-                int x = (int)(Math.random() * (400)) + 100;
-                int y = 200 + (int)(Math.random() * (300));
-                platforms[i] = new Rectangle(x, y, width, height);
-            }
             startGame();
 
         }
@@ -143,16 +154,8 @@ public class Game extends JPanel implements KeyListener, ActionListener {
             JOptionPane.showMessageDialog(this, "Player 2 has been defeated!");
             timer.stop();
             timer.start();
-            for (int i = 1; i < 7; i++) {
-                int width = 50;
-                int height = 20;
-                int x = (int)(Math.random() * (WIDTH - width));
-                int y = 200 + (int)(Math.random() * (300));
-                platforms[i] = new Rectangle(x, y, width, height);
-            }
             startGame();
         }
-
         repaint();
     }
 
@@ -170,7 +173,7 @@ public class Game extends JPanel implements KeyListener, ActionListener {
     public void keyReleased(KeyEvent e) {
         player1.keyReleased(e);
         player2.keyReleased(e);
-        attack(e);
+        // attack(e);
     }
 
     public static void main(String[] args) {
@@ -180,6 +183,5 @@ public class Game extends JPanel implements KeyListener, ActionListener {
         frame.setContentPane(game);
         frame.pack();
         frame.setVisible(true);
-    }
-    
+    } 
 }

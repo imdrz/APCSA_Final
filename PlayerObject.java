@@ -13,19 +13,17 @@ public class PlayerObject {
     private Image playerImage;
     private int[] keyBinds, strokes;
     private String facing;
-    private double knockback = 0.75;
+    private double knockback = 1;
     
     public PlayerObject(String imagePath, int x, int y, Rectangle[] platforms, int[] keyBinds) {
-        SPAWN_X = y;
-        SPAWN_Y = x;
+        this.SPAWN_X = y;
+        this.SPAWN_Y = x;
         this.x = x;
         this.y = y;
         this.platforms = platforms;
         playerImage = new ImageIcon(getClass().getResource(imagePath)).getImage();
         this.keyBinds = keyBinds;
         this.strokes = new int[]{0, 0, 0};
-        this.SPAWN_X = x;
-        this.SPAWN_Y = y;
     }
 
     public void draw(Graphics g) {
@@ -43,6 +41,10 @@ public class PlayerObject {
         x += dx;
         y += dy;
 
+        if (y > 800) {
+            die();
+        }
+
 
         projectileCollision();
         checkCollision();
@@ -56,30 +58,24 @@ public class PlayerObject {
 
     public void checkCollision() {
         for (Rectangle p: platforms) {
-            if (p.y == platforms[platforms.length-1].y) {
-                if (getBounds().intersects(p)) {
-                    die();
-                }
-            } else {
-                if (new Rectangle(x, y+HEIGHT-1, WIDTH, 1).intersects(p)) {
-                    // bottom bound
-                    y = p.y - HEIGHT;
-                    onGround = true;
-                    hasDoubleJump = true;
-                    dy = 0;
-                } else if (new Rectangle(x, y-1, WIDTH, 1).intersects(p)) {
-                    // top bound
-                    y = p.y+p.height;
-                    dy = 0;
-                } else if (new Rectangle(x-1, y, 1, HEIGHT).intersects(p)) {
-                    // left bound
-                    x = p.x+p.width;
-                    dx = 0;
-                } else if (new Rectangle(x+WIDTH-1, y, 1, HEIGHT).intersects(p)) {
-                    // right bound
-                    x = p.x-WIDTH;
-                    dx = 0;
-                }
+            if (new Rectangle(x, y+HEIGHT-1, WIDTH, 1).intersects(p)) {
+                // bottom bound
+                y = p.y - HEIGHT;
+                onGround = true;
+                hasDoubleJump = true;
+                dy = 0;
+            } else if (new Rectangle(x, y-1, WIDTH, 1).intersects(p)) {
+                // top bound
+                y = p.y+p.height;
+                dy = 0;
+            } else if (new Rectangle(x-1, y, 1, HEIGHT).intersects(p)) {
+                // left bound
+                x = p.x+p.width;
+                dx = 0;
+            } else if (new Rectangle(x+WIDTH-1, y, 1, HEIGHT).intersects(p)) {
+                // right bound
+                x = p.x-WIDTH;
+                dx = 0;
             }
         }
     }
@@ -95,23 +91,31 @@ public class PlayerObject {
     public void die() {
         x = SPAWN_X;
         y = SPAWN_Y;
+        dx = 0;
+        dy = 0;
         lives--;
         knockback = 0.75;
     }
 
     public void takeHit(int dir) {
-        x+= ((int) 45 * knockback * dir);
-        y-= ((int) 20 * knockback);
+        x+= ((int) 50 * knockback * dir);
+        y-= ((int) -5 * knockback);
         knockback += 0.45;
     }
 
     public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == keyBinds[1]) {
+            strokes[1] = 1;
             velocityP = 1;
         } else if (e.getKeyCode() == keyBinds[0]) {
             velocityP = -1;
-        } else if (e.getKeyCode() == keyBinds[2] && onGround == true) {
-            dy = -55;
+            strokes[0] = 1;
+        } else if (e.getKeyCode() == keyBinds[2]) {
+            strokes[2] = 1;
+        }
+
+        if (e.getKeyCode() == keyBinds[3]) {
+            Game.projectiles.add(new Projectile(x, y, getHitCoords()[0] * 10, this));
         }
     }
 
@@ -134,8 +138,11 @@ public class PlayerObject {
             velocityP = 0;
         }
 
-        if (strokes[2] == 1 && (onGround == true || hasDoubleJump == false)) {
-            dy = -15;
+        if (strokes[2] == 1 && (onGround == true || (onGround == false && hasDoubleJump == true))) {
+            if (onGround == false) {
+                hasDoubleJump = false;
+            }
+            dy = -35;
             strokes[2] = 0;
             onGround = false;
         }
@@ -144,21 +151,28 @@ public class PlayerObject {
     public void projectileCollision(){
         ArrayList<Projectile> toRemove = new ArrayList<>();
         for (Projectile p : Game.projectiles) {
+            for (Rectangle platform: platforms) {
+                if (platform.intersects(p.getBounds())) {
+                    toRemove.add(p);
+                }
+            }
             if (p.getOwner() != this && p.getBounds().intersects(this.getBounds())) {
                 if (p.getX() < this.x) {
-                    dx = 50;
+                    dx = (int) (50 * knockback);
                     dy = -5;
                     x += dx;
                     y += dy;
                 } else {
-                    dx = -50;
+                    dx = (int) (-50 * knockback);
                     dy = -5;
                     x += dx;
                     y += dy;
                 }
+                knockback += 0.35;
                 toRemove.add(p);
             }
         }
+        
         Game.projectiles.removeAll(toRemove);
     }
 
@@ -177,13 +191,7 @@ public class PlayerObject {
     public int getY() {
         return y;
     }
-    private void reset() {
-        x = SPAWN_X;
-        y = SPAWN_Y;
-        dx = 0;
-        dy = 0;
-        velocityP = 0;
-    }
+    
     public int getHealth(){
         return lives;
     }
