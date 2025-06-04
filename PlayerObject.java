@@ -1,8 +1,8 @@
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Rectangle;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 
 public class PlayerObject {
     private int x, y, dx = 0, dy = 0, SPAWN_X, SPAWN_Y;
@@ -10,15 +10,18 @@ public class PlayerObject {
     private int WIDTH = 40, HEIGHT = 60, velocityP = 0, lives = 3;
     private Rectangle[] platforms;
     private Color c;
+    private Image playerImage;
     private int[] keyBinds, strokes;
     private String facing;
     private double knockback = 0.75;
     
-    public PlayerObject(Color c, int x, int y, Rectangle[] platforms, int[] keyBinds) {
+    public PlayerObject(String imagePath, int x, int y, Rectangle[] platforms, int[] keyBinds) {
+        SPAWN_X = y;
+        SPAWN_Y = x;
         this.x = x;
         this.y = y;
         this.platforms = platforms;
-        this.c = c;
+        playerImage = new ImageIcon(getClass().getResource(imagePath)).getImage();
         this.keyBinds = keyBinds;
         this.strokes = new int[]{0, 0, 0};
         this.SPAWN_X = x;
@@ -26,21 +29,22 @@ public class PlayerObject {
     }
 
     public void draw(Graphics g) {
-        g.setColor(c);
-        g.fillRect(this.x, this.y, WIDTH, HEIGHT);
+        g.drawImage(playerImage, this.x, this.y, WIDTH, HEIGHT, null);
     }
 
     public void update() {
         dx = 6 * velocityP;
         dy++;
 
-        if (dy > 17) {
-            dy = 17;
+        if (dy < -10) {
+            dy = -10;
         }
 
         x += dx;
         y += dy;
 
+
+        projectileCollision();
         checkCollision();
     }
 
@@ -103,14 +107,11 @@ public class PlayerObject {
 
     public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == keyBinds[1]) {
-            strokes[1] = 1;
+            velocityP = 1;
         } else if (e.getKeyCode() == keyBinds[0]) {
-            strokes[0] = 1;
+            velocityP = -1;
         } else if (e.getKeyCode() == keyBinds[2] && onGround == true) {
-            strokes[2] = 1;
-        } else if (e.getKeyCode() == keyBinds[2] && onGround == false && hasDoubleJump == true) {
-            strokes[2] = 1;
-            hasDoubleJump = false;
+            dy = -55;
         }
     }
 
@@ -138,5 +139,52 @@ public class PlayerObject {
             strokes[2] = 0;
             onGround = false;
         }
+    }
+
+    public void projectileCollision(){
+        ArrayList<Projectile> toRemove = new ArrayList<>();
+        for (Projectile p : Game.projectiles) {
+            if (p.getOwner() != this && p.getBounds().intersects(this.getBounds())) {
+                if (p.getX() < this.x) {
+                    dx = 50;
+                    dy = -5;
+                    x += dx;
+                    y += dy;
+                } else {
+                    dx = -50;
+                    dy = -5;
+                    x += dx;
+                    y += dy;
+                }
+                toRemove.add(p);
+            }
+        }
+        Game.projectiles.removeAll(toRemove);
+    }
+
+    public int getDx() {
+        return dx;
+    }
+
+    public int getDy() {
+        return dy;
+    }
+
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
+    }
+    private void reset() {
+        x = SPAWN_X;
+        y = SPAWN_Y;
+        dx = 0;
+        dy = 0;
+        velocityP = 0;
+    }
+    public int getHealth(){
+        return lives;
     }
 }
