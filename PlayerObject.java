@@ -1,29 +1,32 @@
+package APCSA_Final;
+
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 
 public class PlayerObject {
-    private int x, y, dx = 0, dy = 0, SPAWN_X, SPAWN_Y;
-    private boolean onGround = false, hasDoubleJump = true;
-    private int WIDTH = 40, HEIGHT = 60, velocityP = 0, lives = 3;
+    private int x, y, dx = 0, dy = 0;
+    private boolean onGround = false;
+    private int velocityP = 0;
+    private int WIDTH = 40, HEIGHT = 60;
     private Rectangle[] platforms;
     private Color c;
+    private int[] keyBinds;
+    private int spawnY;
+    private int spawnX;
+    private int health = 3;
+    private ArrayList<Integer> velocityPArr= new ArrayList<Integer>();
     private Image playerImage;
-    private int[] keyBinds, strokes;
-    private String facing;
-    private double knockback = 1;
     
     public PlayerObject(String imagePath, int x, int y, Rectangle[] platforms, int[] keyBinds) {
-        this.SPAWN_X = y;
-        this.SPAWN_Y = x;
+        spawnY = y;
+        spawnX = x;
         this.x = x;
         this.y = y;
         this.platforms = platforms;
         playerImage = new ImageIcon(getClass().getResource(imagePath)).getImage();
         this.keyBinds = keyBinds;
-        this.strokes = new int[]{0, 0, 0};
     }
 
     public void draw(Graphics g) {
@@ -31,23 +34,26 @@ public class PlayerObject {
     }
 
     public void update() {
-        dx = 6 * velocityP;
+        dx = 5 * velocityP;
         dy++;
 
-        if (dy < -10) {
-            dy = -10;
+        if (dy < -20) {
+            dy = -5;
         }
 
         x += dx;
         y += dy;
 
-        if (y > 800) {
-            die();
+        if(y > 800){
+            health--;
+            reset();
         }
 
 
         projectileCollision();
         checkCollision();
+
+        // System.out.println(dx + ", " + dy + "(" + x + ", " + y + ")");
     }
 
     
@@ -58,122 +64,67 @@ public class PlayerObject {
 
     public void checkCollision() {
         for (Rectangle p: platforms) {
-            if (new Rectangle(x, y+HEIGHT-1, WIDTH, 1).intersects(p)) {
-                // bottom bound
+            if (getBounds().intersects(p) && dy >= 0) {
                 y = p.y - HEIGHT;
                 onGround = true;
-                hasDoubleJump = true;
                 dy = 0;
-            } else if (new Rectangle(x, y-1, WIDTH, 1).intersects(p)) {
-                // top bound
-                y = p.y+p.height;
-                dy = 0;
-            } else if (new Rectangle(x-1, y, 1, HEIGHT).intersects(p)) {
-                // left bound
-                x = p.x+p.width;
-                dx = 0;
-            } else if (new Rectangle(x+WIDTH-1, y, 1, HEIGHT).intersects(p)) {
-                // right bound
-                x = p.x-WIDTH;
-                dx = 0;
+                break;
+            } else {
+                onGround = false;
             }
         }
     }
-    
+
     public int[] getData() {
+        // 0 - 1 - 2 - 3
+        // x - y - w - h
         return new int[]{x, y, WIDTH, HEIGHT};
-    }
-
-    public int[] getHitCoords() {
-        return new int[]{(facing == "right" ? 1 : -1), (dy < 0 ? 1 : 0)};
-    }
-
-    public void die() {
-        x = SPAWN_X;
-        y = SPAWN_Y;
-        dx = 0;
-        dy = 0;
-        lives--;
-        knockback = 0.75;
-    }
-
-    public void takeHit(int dir) {
-        x+= ((int) 50 * knockback * dir);
-        y-= ((int) -5 * knockback);
-        knockback += 0.45;
     }
 
     public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == keyBinds[1]) {
-            strokes[1] = 1;
             velocityP = 1;
+            velocityPArr.add(velocityP);
         } else if (e.getKeyCode() == keyBinds[0]) {
             velocityP = -1;
-            strokes[0] = 1;
-        } else if (e.getKeyCode() == keyBinds[2]) {
-            strokes[2] = 1;
+            velocityPArr.add(velocityP);
+        } else if (e.getKeyCode() == keyBinds[2] && onGround == true) {
+            dy = -20;
+        } else if(e.getKeyCode() == keyBinds[3]){
+            Arcade.projectiles.add(new Projectile(x, y, 5, this));
         }
-
-        if (e.getKeyCode() == keyBinds[3]) {
-            Game.projectiles.add(new Projectile(x, y, getHitCoords()[0] * 10, this));
+        else if(e.getKeyCode() == keyBinds[4]){
+            Arcade.projectiles.add(new Projectile(x, y, -5, this));
         }
     }
 
     public void keyReleased(KeyEvent e) {
         if (e.getKeyCode() == keyBinds[1]) {
-            strokes[1] = 0;
-        } else if (e.getKeyCode() == keyBinds[0]) {
-            strokes[0] = 0;
-        }
-    }
-
-    public void actionPerformed(ActionEvent e) {
-        if (strokes[1] == 1) {
-            velocityP = 1;
-            facing = "right";
-        } else if (strokes[0] == 1) {
-            velocityP = -1;
-            facing = "left";
-        } else {
             velocityP = 0;
-        }
-
-        if (strokes[2] == 1 && (onGround == true || (onGround == false && hasDoubleJump == true))) {
-            if (onGround == false) {
-                hasDoubleJump = false;
-            }
-            dy = -35;
-            strokes[2] = 0;
-            onGround = false;
+        } else if (e.getKeyCode() == keyBinds[0]) {
+            velocityP = 0;
         }
     }
 
     public void projectileCollision(){
         ArrayList<Projectile> toRemove = new ArrayList<>();
-        for (Projectile p : Game.projectiles) {
-            for (Rectangle platform: platforms) {
-                if (platform.intersects(p.getBounds())) {
-                    toRemove.add(p);
-                }
-            }
+        for (Projectile p : Arcade.projectiles) {
             if (p.getOwner() != this && p.getBounds().intersects(this.getBounds())) {
                 if (p.getX() < this.x) {
-                    dx = (int) (50 * knockback);
+                    dx = 50;
                     dy = -5;
                     x += dx;
                     y += dy;
                 } else {
-                    dx = (int) (-50 * knockback);
+                    dx = -50;
                     dy = -5;
                     x += dx;
                     y += dy;
                 }
-                knockback += 0.35;
                 toRemove.add(p);
             }
         }
-        
-        Game.projectiles.removeAll(toRemove);
+        Arcade.projectiles.removeAll(toRemove);
     }
 
     public int getDx() {
@@ -191,8 +142,14 @@ public class PlayerObject {
     public int getY() {
         return y;
     }
-    
+    private void reset() {
+        x = spawnX;
+        y = spawnY;
+        dx = 0;
+        dy = 0;
+        velocityP = 0;
+    }
     public int getHealth(){
-        return lives;
+        return health;
     }
 }
