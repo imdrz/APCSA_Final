@@ -2,26 +2,37 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Scanner;
 
 public class Game extends JPanel implements KeyListener, ActionListener, JavaArcade {
     private Timer timer;
-    private int WIDTH, HEIGHT, i;
+    private int WIDTH, HEIGHT;
     private PlayerObject player1, player2;
     private Rectangle[] platforms, m1, m2, m3;
     private JLabel player1HealthLabel, player2HealthLabel;
     public static ArrayList<Projectile> projectiles = new ArrayList<>();;
     public ArrayList<Cloud> clouds;
-    private ArrayList<Integer> times;
     private int[] p1C, p2C;
     private String state = "running";
-    private int currentScore = 0, highScore = 1000;
+    private int currentScore, highScore = 10000;
+    private int longestWinStreak = 0;
+    private int lastWinner = 0;
     private int secondsElapsed = 0;
+    private Timer secondTimer;
     private GameStats gameStats;
 
     public Game(int w, int h) {
+        loadLongestWinStreakData();
+        secondTimer = new Timer(1000, this);
+        secondTimer.start();
+        loadLongestWinStreakData();
         WIDTH = w;
         HEIGHT = h;
-        times = new ArrayList<>();
         this.setLayout(null);
 
         player1HealthLabel = new JLabel();
@@ -73,9 +84,9 @@ public class Game extends JPanel implements KeyListener, ActionListener, JavaArc
                 new int[] { KeyEvent.VK_LEFT, KeyEvent.VK_RIGHT, KeyEvent.VK_UP, KeyEvent.VK_COMMA });
         clouds = new ArrayList<>();
         clouds.add(new Cloud(this));
-        // clouds.add(new Cloud(this));
-        // clouds.add(new Cloud(this));
-        // clouds.add(new Cloud(this));
+        clouds.add(new Cloud(this));
+        clouds.add(new Cloud(this));
+        clouds.add(new Cloud(this));
     }
 
     public void randomizeMap() {
@@ -120,14 +131,14 @@ public class Game extends JPanel implements KeyListener, ActionListener, JavaArc
 
         player1.draw(g);
         player2.draw(g);
+        g.setColor(Color.BLACK);
+        g.setFont(new Font("Arial", Font.BOLD, 18));
+        g.drawString("Time: " + secondsElapsed + " sec", WIDTH - 150, 30);
     }
 
     public void actionPerformed(ActionEvent e) {
-        i++;
-        if (i > 66) {
-            i = 0;
+        if (e.getSource() == secondTimer) {
             secondsElapsed++;
-            gameStats.update(secondsElapsed);
         }
 
         if (state == "running") {
@@ -161,6 +172,7 @@ public class Game extends JPanel implements KeyListener, ActionListener, JavaArc
                 timer.stop();
                 timer.start();
                 resetGame();
+                gameStats.gameOver(highScore);
 
             }
 
@@ -170,17 +182,18 @@ public class Game extends JPanel implements KeyListener, ActionListener, JavaArc
                 timer.stop();
                 timer.start();
                 resetGame();
+                gameStats.gameOver(highScore);
             }
             repaint();
         }
     }
 
     public void updateScores() {
+        System.out.println(secondsElapsed);
+        System.out.println(highScore);
         if (secondsElapsed < highScore) {
-            highScore = secondsElapsed;
+            saveLongestWinStreakData();
         }
-        times.add(secondsElapsed);
-        gameStats.gameOver(highScore);
     }
 
     public void keyTyped(KeyEvent e) {
@@ -231,5 +244,25 @@ public class Game extends JPanel implements KeyListener, ActionListener, JavaArc
 
     public void setDisplay(GameStats d) {
         gameStats = d;
+    }
+
+    public void loadLongestWinStreakData() {
+        try (Scanner scanner = new Scanner(new File("/home/vncuser/runtime/scores.txt"))) {
+            if (scanner.hasNextInt()) {
+                highScore = scanner.nextInt();
+            }
+        } catch (IOException e) {
+            System.out.println("Could not read longest streak data.");
+        }
+    }    
+
+    public void saveLongestWinStreakData() {
+        String filePath = "/home/vncuser/runtime/scores.txt";
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath, false))) {
+            writer.write(Integer.toString(secondsElapsed));
+            writer.newLine(); 
+        } catch (IOException e) {
+            System.err.println("Error writing to file: " + e.getMessage());
+        }
     }
 }

@@ -8,24 +8,21 @@ public class PlayerObject {
     private boolean onGround = false, hasDoubleJump = true;
     private int WIDTH = 40, HEIGHT = 60, velocityP = 0, lives = 3;
     private Rectangle[] platforms;
-    private Image playerImage;
     private int[] keyBinds, strokes;
     private String facing;
     private double knockback = 1;
     
-    public PlayerObject(String imagePath, int x, int y, Rectangle[] platforms, int[] keyBinds) {
+    public PlayerObject(int x, int y, Rectangle[] platforms, int[] keyBinds) {
         this.SPAWN_X = x;
         this.SPAWN_Y = y;
         this.x = x;
         this.y = y;
         this.platforms = platforms;
-        playerImage = new ImageIcon(getClass().getResource(imagePath)).getImage();
         this.keyBinds = keyBinds;
         this.strokes = new int[]{0, 0, 0};
     }
 
     public void draw(Graphics g) {
-        // g.drawImage(playerImage, this.x, this.y, WIDTH, HEIGHT, null);
         g.setColor(Color.black);
         g.fillRect(x, y, WIDTH, HEIGHT);
     }
