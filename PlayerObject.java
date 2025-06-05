@@ -1,7 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.util.ArrayList;
 
 public class PlayerObject {
@@ -9,15 +8,14 @@ public class PlayerObject {
     private boolean onGround = false, hasDoubleJump = true;
     private int WIDTH = 40, HEIGHT = 60, velocityP = 0, lives = 3;
     private Rectangle[] platforms;
-    private Color c;
     private Image playerImage;
     private int[] keyBinds, strokes;
     private String facing;
     private double knockback = 1;
     
     public PlayerObject(String imagePath, int x, int y, Rectangle[] platforms, int[] keyBinds) {
-        this.SPAWN_X = y;
-        this.SPAWN_Y = x;
+        this.SPAWN_X = x;
+        this.SPAWN_Y = y;
         this.x = x;
         this.y = y;
         this.platforms = platforms;
@@ -27,15 +25,17 @@ public class PlayerObject {
     }
 
     public void draw(Graphics g) {
-        g.drawImage(playerImage, this.x, this.y, WIDTH, HEIGHT, null);
+        // g.drawImage(playerImage, this.x, this.y, WIDTH, HEIGHT, null);
+        g.setColor(Color.black);
+        g.fillRect(x, y, WIDTH, HEIGHT);
     }
 
     public void update() {
         dx = 6 * velocityP;
         dy++;
 
-        if (dy < -10) {
-            dy = -10;
+        if (dy > 17) {
+            dy = 17;
         }
 
         x += dx;
@@ -50,29 +50,27 @@ public class PlayerObject {
         checkCollision();
     }
 
-    
-
     public Rectangle getBounds() {
         return new Rectangle(x, y, WIDTH, HEIGHT);
     }
 
     public void checkCollision() {
         for (Rectangle p: platforms) {
-            if (new Rectangle(x, y+HEIGHT-1, WIDTH, 1).intersects(p)) {
+            if (new Rectangle(x+1, y+HEIGHT-1, WIDTH-1, 1).intersects(p)) {
                 // bottom bound
                 y = p.y - HEIGHT;
                 onGround = true;
                 hasDoubleJump = true;
                 dy = 0;
-            } else if (new Rectangle(x, y-1, WIDTH, 1).intersects(p)) {
+            } else if (new Rectangle(x+1, y-1, WIDTH-1, 1).intersects(p)) {
                 // top bound
                 y = p.y+p.height;
                 dy = 0;
-            } else if (new Rectangle(x-1, y, 1, HEIGHT).intersects(p)) {
+            } else if (new Rectangle(x-1, y+1, 1, HEIGHT-1).intersects(p)) {
                 // left bound
                 x = p.x+p.width;
                 dx = 0;
-            } else if (new Rectangle(x+WIDTH-1, y, 1, HEIGHT).intersects(p)) {
+            } else if (new Rectangle(x+WIDTH-1, y+1, 1, HEIGHT-1).intersects(p)) {
                 // right bound
                 x = p.x-WIDTH;
                 dx = 0;
@@ -114,9 +112,7 @@ public class PlayerObject {
             strokes[2] = 1;
         }
 
-        if (e.getKeyCode() == keyBinds[3]) {
-            Game.projectiles.add(new Projectile(x, y, getHitCoords()[0] * 10, this));
-        }
+        
     }
 
     public void keyReleased(KeyEvent e) {
@@ -124,6 +120,10 @@ public class PlayerObject {
             strokes[1] = 0;
         } else if (e.getKeyCode() == keyBinds[0]) {
             strokes[0] = 0;
+        }
+
+        if (e.getKeyCode() == keyBinds[3]) {
+            Game.projectiles.add(new Projectile(x, y, getHitCoords()[0] * 13, this));
         }
     }
 
@@ -142,9 +142,11 @@ public class PlayerObject {
             if (onGround == false) {
                 hasDoubleJump = false;
             }
-            dy = -35;
+            dy = -17;
             strokes[2] = 0;
             onGround = false;
+        } else if (strokes[2] == 1) {
+            strokes[2] = 0;
         }
     }
 
